@@ -61,13 +61,13 @@ extras_require = {
 # This call to setup() does all the work
 setup(
     name="instatus.py",
-    url="https://github.com/mccoderpy/instatus.py-message-components",
+    url="https://github.com/mccoderpy/instatus.py",
     project_urls={'Source': 'https://github.com/mccoderpy/instatus.py', 'Support': 'https://discord.gg/sb69muSqsg', 'Issue Tracker': 'https://github.com/mccoderpy/instatus.py/issues'},
     author_email="mccuber04@outlook.de",
     version=str(v if v else version),
     author="mccoder.py",
     description="A simple asyncron wrapper for the Instatus-API",
-    keywords='instatus instatus.py instatus-api api-wrapper statistics',
+    keywords='instatus instatus.py instatus-api api-wrapper statistics async-api-wrapper python-3 python3 asyncio',
     long_description=readme,
     long_description_content_type="text/x-rst",
     extras_require=extras_require,
@@ -81,6 +81,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Internet',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules',
@@ -89,5 +90,5 @@ setup(
     packages=['instatus'],
     include_package_data=True,
     install_requires=["aiohttp", "chardet", "yarl", "async-timeout", "typing-extensions", "attrs", "multidict", "idna"],
-    python_requires=">=3.6"
+    python_requires=">=3.7"
 )
