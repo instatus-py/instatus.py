@@ -5,6 +5,7 @@ import datetime
 def to_json(obj):
     return json.dumps(obj, separators=(',', ':'), ensure_ascii=True)
 
+
 def _parse_ratelimit_header(request, *, use_clock=False):
     reset_after = request.headers.get('X-Ratelimit-Reset-After')
     if use_clock or not reset_after:
