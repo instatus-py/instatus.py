@@ -168,11 +168,11 @@ class StatusClient:
         data = await self._http.get_status_pages()
         return data
 
-    async def create_status_page(self):
-        return await self._http.create_status_page()
+    async def create_status_page(self, data):
+        return await self._http.create_status_page(data)
 
-    async def update_status_page(self, page_id: str):
-        return await self._http.update_status_page(page_id)
+    async def update_status_page(self, page_id: str, data):
+        return await self._http.update_status_page(page_id, data)
 
     async def delete_status_page(self, page_id: str):
         return await self._http.delete_status_page(page_id)
@@ -180,11 +180,41 @@ class StatusClient:
     async def get_component(self, page_id: str):
         return await self._http.delete_status_page(page_id)
 
-    async def update_component(self, page_id: str, component_id: str):
-        return await self._http.update_component(page_id, component_id)
+    async def update_component(self, page_id: str, component_id: str, data):
+        return await self._http.update_component(page_id, component_id, data)
 
     async def delete_component(self, page_id: str, component_id: str):
         return await self._http.delete_component(page_id, component_id)
 
     async def get_incident(self, page_id: str, incident_id: str):
         return await self._http.get_incident(page_id, incident_id)
+
+    async def getall_incidents(self, page_id: str):
+        return await self._http.get_all_incidents(page_id)
+
+    async def add_incident(self, page_id: str, data):
+        return await self._http.add_incident(page_id, data)
+
+    async def update_incident(self, page_id: str, incident_id: str, data):
+        return await self._http.update_incident(page_id, incident_id, data)
+
+    async def delete_incident(self, page_id: str, incident_id: str):
+        return await self._http.delete_incident(page_id, incident_id)
+
+    async def get_incident_update(self, page_id: str, incident_id: str, incident_update_id: str):
+        return await self._http.get_incident_update(page_id, incident_id, incident_update_id)
+
+    async def add_incident_update(self, page_id: str, incident_id: str, data):
+        return await self._http.add_incident_update(page_id, incident_id, data)
+
+    async def edit_incident_update(self, page_id: str, incident_id: str, incident_update_id: str, data):
+        return await self._http.edit_incident_update(page_id, incident_id, incident_update_id, data)
+
+    async def delete_incident_update(self, page_id: str, incident_id: str, incident_update_id: str):
+        return await self._http.delete_incident_update(page_id, incident_id, incident_update_id)
+
+    async def get_maintenance(self, page_id: str, incident_id: str):
+        return await self._http.get_maintenance(page_id, incident_id)
+
+    async def get_all_maintenances(self, page_id: str):
+        return await self._http.get_all_maintenances(page_id)
