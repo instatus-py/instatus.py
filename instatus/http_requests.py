@@ -2,7 +2,7 @@
 """
 The MIT License (MIT)
 
-Copyright (c) 2022-present mccoderpy
+Copyright (c) 2022-present mccoderpy & McJojo22
 
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -41,13 +41,17 @@ log = logging.getLogger(__name__)
 
 
 async def json_or_text(response):
-    text = await response.text(encoding='utf-8')
+    encoding = 'utf-8'
+    content_type = None
     try:
-        if response.headers['content-type'] == 'application/json':
-            return json.loads(text)
+        content_type, encoding = response.headers['content-type'].split('; charset=')
     except KeyError:
         # Thanks Cloudflare
         pass
+
+    text = await response.text(encoding=encoding)
+    if content_type == 'application/json':
+        return json.loads(text)
 
     return text
 
@@ -84,13 +88,13 @@ class MaybeUnlock:
     def defer(self):
         self._unlock = False
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         if self._unlock:
             self.lock.release()
 
 
 class HTTPClient:
-    """Represents a HTTP client sending HTTP requests to the Instatus API."""
+    """Represents an HTTP client sending HTTP requests to the Instatus API."""
 
     SUCCESS_LOG = '{method} {url} has received {text}'
     REQUEST_LOG = '{method} {url} with {json} has returned {status}'
@@ -105,13 +109,19 @@ class HTTPClient:
                  unsync_clock=True,
                  cookie_file=None,
                  http_kwargs: dict = {}):
-        self.loop = asyncio.get_event_loop() if loop is None else loop
+        if not loop:
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+        self.loop = loop
         self.connector = connector
-        self.__session = aiohttp.ClientSession(loop=self.loop, cookies=cookie_file or aiohttp.CookieJar(), **http_kwargs)
+        self.__session = aiohttp.ClientSession(loop=loop, cookies=cookie_file or aiohttp.CookieJar(), **http_kwargs)
         self._locks = weakref.WeakValueDictionary()
         self._global_over = asyncio.Event()
         self._global_over.set()
         self.api_key = api_key
+        self.cookie_file = cookie_file
         self.http_kwargs = http_kwargs
         self.proxy = proxy
         self.proxy_auth = proxy_auth
@@ -267,9 +277,207 @@ class HTTPClient:
 
     # state management
 
+    @property
+    def is_closed(self):
+        return self.__session.closed
+
     async def close(self):
         if self.__session:
             await self.__session.close()
 
     def get_summary(self, prod_name):
-        return self.request(Route('GET', full_url=f'https://{prod_name}.instatus.com/summary.json'), ssl=False)
+        return self.request(Route('GET', full_url=f'https://{prod_name}.instatus.com/summary.json'))
+
+    # Status pager requests
+
+    def get_status_pages(self):
+        """
+        Get a Status page from the instatus api
+        """
+        return self.request(Route('GET', f"v1/pages"))
+
+    def create_status_page(self, data):
+        """
+        Create a Status page from the instatus api
+        """
+        return self.request(Route('POST', f"v1/pages"), json=data)
+
+    def update_status_page(self, page_id, data):
+        """
+        Update a Status page from the instatus api
+        """
+        return self.request(Route('PUT', f"v1/{page_id}"), json=data)
+
+    def delete_status_page(self, page_id):
+        """
+        Delete a Status page from the instatus api
+        """
+        return self.request(Route('DELETE', f"v1/{page_id}"))
+
+    # Components requests
+
+    def get_component(self, page_id, component_id):
+        """
+        Get a component from the instatus api
+        """
+        return self.request(Route('GET', f"v1/{page_id}/components/{component_id}"))
+
+    def get_all_components(self, page_id):
+        """
+        Get a component from the instatus api
+        """
+        return self.request(Route('GET', f"v1/{page_id}/components"))
+
+    def create_component(self, page_id, data):
+        """
+        Create a component from the instatus api
+        """
+        return self.request(Route('POST', f"v1/{page_id}/components"), json=data)
+
+    def update_component(self, page_id, component_id, data):
+        """
+        Update a component from the instatus api
+        """
+        return self.request(Route('PUT', f"v1/{page_id}/components/{component_id}"), json=data)
+
+    def delete_component(self, page_id, component_id):
+        """
+        Delete a component from the instatus api
+        """
+        return self.request(Route('DELETE', f"v1/{page_id}/components/{component_id}"))
+
+    # Incident requests
+
+    def get_incident(self, page_id, incident_id):
+        """
+        Get an incident from the instatus api
+        """
+        return self.request(Route('GET', f"v1/{page_id}/incidents/{incident_id}"))
+
+    def get_all_incidents(self, page_id):
+        """
+        Get all incidents from the instatus api
+        """
+        return self.request(Route('GET', f"v1/{page_id}/incidents"))
+
+    def add_incident(self, page_id, data):
+        """
+        Add incident from the instatus api
+        """
+        return self.request(Route('POST', f"v1/{page_id}/incidents"), json=data)
+
+    def update_incident(self, page_id, incident_id, data):
+        """
+        Update incident from the instatus api
+        """
+        return self.request(Route('PUT', f"v1/{page_id}/incidents/{incident_id}"), json=data)
+
+    def delete_incident(self, page_id, incident_id):
+        """
+        Delete incident from the instatus api
+        """
+        return self.request(Route('DELETE', f"v1/{page_id}/incidents/{incident_id}"))
+
+    # Incident update requests
+
+    def get_incident_update(self, page_id, incident_id, incident_update_id):
+        """
+        Get an incident update from the instatus api
+        """
+        return self.request(Route('GET', f"v1/{page_id}/incidents/{incident_id}/incident-updates/{incident_update_id}"))
+
+    def add_incident_update(self, page_id, incident_id, data):
+        """
+        Add an incident update from the instatus api
+        """
+        return self.request(Route('POST', f"v1/{page_id}/incidents/{incident_id}/incident-updates"), json=data)
+
+    def edit_incident_update(self, page_id, incident_id, incident_update_id, data):
+        """
+        Update a incident update from the instatus api
+        """
+        return self.request(Route('PUT', f"v1/{page_id}/incidents/{incident_id}/incident-updates/{incident_update_id}"), json=data)
+
+    def delete_incident_update(self, page_id, incident_id, incident_update_id):
+        """
+        Delete an incident update from the instatus api
+        """
+        return self.request(Route('DELETE', f"v1/{page_id}/incidents/{incident_id}/incident-updates/{incident_update_id}"))
+
+    # Maintenances
+
+    def get_maintenance(self, page_id, maintenance_id):
+        """
+        Get a maintenance from the instatus api
+        """
+        return self.request(Route('GET', f"v1/{page_id}/maintenances/{maintenance_id}"))
+
+    def get_all_maintenances(self, page_id):
+        """
+        Get all maintenances from the instatus api
+        """
+        return self.request(Route('GET', f"v1/{page_id}/maintenances"))
+
+    def add_maintenance(self, page_id, data):
+        """
+        Add a maintenance from the instatus api
+        """
+        return self.request(Route('POST', f"v1/{page_id}/maintenances"), json=data)
+
+    def update_maintenance(self, page_id, maintenance_id, data):
+        """
+        Update a maintenance from the instatus api
+        """
+        return self.request(Route('PUT', f"v1/{page_id}/maintenances/{maintenance_id}"), json=data)
+
+    def delete_maintenance(self, page_id, maintenance_id):
+        """
+        Delete a maintenance from the instatus api
+        """
+        return self.request(Route('DELETE', f"v1/{page_id}/maintenances/{maintenance_id}"))
+
+    # Maintenances update
+
+    def get_maintenance_update(self, page_id, maintenance_id, maintenance_update_id):
+        """
+        Get a maintenance update from the instatus api
+        """
+        return self.request(Route('GET', f"v1/{page_id}/maintenances/{maintenance_id}/maintenance-updates/{maintenance_update_id}"))
+
+    def add_maintenance_update(self, page_id, maintenance_id, data):
+        """
+        Create a maintenance update from the instatus api
+        """
+        return self.request(Route('POST', f"v1/{page_id}/maintenances/{maintenance_id}/maintenance-updates"), json=data)
+
+    def edit_maintenance_update(self, page_id, maintenance_id, maintenance_update_id, data):
+        """
+        Update a maintenance update from the instatus api
+        """
+        return self.request(Route('PUT', f"v1/{page_id}/maintenances/{maintenance_id}/maintenance-updates/{maintenance_update_id}"), json=data)
+
+    def delete_maintenance_update(self, page_id, maintenance_id, maintenance_update_id):
+        """
+        Delete a maintenance update from the instatus api
+        """
+        return self.request(Route('DELETE', f"v1/{page_id}/maintenances/{maintenance_id}/maintenance-updates/{maintenance_update_id}"))
+
+    # Teammate requests
+
+    def get_teammates(self, page_id):
+        """
+        Get teammate from the instatus api
+        """
+        return self.request(Route('GET', f"v1/{page_id}/team"))
+
+    def add_teammate(self, page_id, data):
+        """
+        Add a teammate from the instatus api
+        """
+        return self.request(Route('POST', f"v1/{page_id}/team"), json=data)
+
+    def delete_teammate(self, page_id, member_id):
+        """
+        Delete a Teammate from the instatus api
+        """
+        return self.request(Route('DELETE', f"v1/{page_id}/team/{member_id}"))

@@ -136,3 +136,7 @@ class Enum(metaclass=EnumMeta):
     @property
     def value(self):
         return getattr(self, 'value')
+
+
+class Status(Enum):
+    UP = 'UP'
