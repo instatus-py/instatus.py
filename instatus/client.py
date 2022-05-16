@@ -163,3 +163,28 @@ class StatusClient:
 
     async def fetch_summary(self, prod_name: str):
         return await self._http.get_summary(prod_name)
+
+    async def get_status_pages(self):
+        data = await self._http.get_status_pages()
+        return data
+
+    async def create_status_page(self):
+        return await self._http.create_status_page()
+
+    async def update_status_page(self, page_id: str):
+        return await self._http.update_status_page(page_id)
+
+    async def delete_status_page(self, page_id: str):
+        return await self._http.delete_status_page(page_id)
+
+    async def get_component(self, page_id: str):
+        return await self._http.delete_status_page(page_id)
+
+    async def update_component(self, page_id: str, component_id: str):
+        return await self._http.update_component(page_id, component_id)
+
+    async def delete_component(self, page_id: str, component_id: str):
+        return await self._http.delete_component(page_id, component_id)
+
+    async def get_incident(self, page_id: str, incident_id: str):
+        return await self._http.get_incident(page_id, incident_id)
